@@ -1,4 +1,4 @@
-# Seeker Guidance Portal (MERN MVP)
+# Seeker Guidance Portal
 
 A guided job-discovery experience for blue- and grey-collar seekers. The app interviews users through a simple conversational flow (voice or text), derives a profile, and then surfaces role matches, learning roadmaps, and curated job cards.
 
