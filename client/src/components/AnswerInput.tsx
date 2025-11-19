@@ -1,15 +1,16 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState } from "react";
 
-import { useSpeechCapture } from '../hooks/useSpeechCapture'
-import type { AnswerMode } from '../types/profile'
+import { useSpeechCapture } from "../hooks/useSpeechCapture";
+import type { AnswerMode } from "../types/profile";
 
 interface AnswerInputProps {
-  disabled?: boolean
-  onSubmit: (text: string, mode: AnswerMode) => void
+  disabled?: boolean;
+  onSubmit: (text: string, mode: AnswerMode) => void;
 }
 
 export const AnswerInput = ({ disabled, onSubmit }: AnswerInputProps) => {
-  const [text, setText] = useState('')
+  const [text, setText] = useState("");
+  const [inputMode, setInputMode] = useState<AnswerMode>("text");
   const {
     isSupported,
     isListening,
@@ -17,32 +18,35 @@ export const AnswerInput = ({ disabled, onSubmit }: AnswerInputProps) => {
     error,
     startListening,
     stopListening,
-  } = useSpeechCapture()
+  } = useSpeechCapture();
 
+  // Keep the textarea synced with the speech transcript.
+  // When transcript changes it reflects voice input, so mark mode as 'voice'.
   useEffect(() => {
-    if (isListening) {
-      setText(transcript)
+    if (transcript && transcript.trim() !== "") {
+      setText(transcript);
+      setInputMode("voice");
     }
-  }, [isListening, transcript])
+  }, [transcript]);
 
   const handleMic = () => {
-    if (disabled) return
+    if (disabled) return;
     if (isListening) {
-      stopListening()
+      stopListening();
     } else {
-      startListening()
+      startListening();
     }
-  }
+  };
 
   const handleSubmit = () => {
-    if (!text.trim()) return
-    const mode: AnswerMode = isListening ? 'voice' : 'text'
-    onSubmit(text, mode)
-    setText('')
+    if (!text.trim()) return;
+    const mode: AnswerMode = inputMode ?? (isListening ? "voice" : "text");
+    onSubmit(text, mode);
+    setText("");
     if (isListening) {
-      stopListening()
+      stopListening();
     }
-  }
+  };
 
   return (
     <div className="answer-input">
@@ -51,32 +55,35 @@ export const AnswerInput = ({ disabled, onSubmit }: AnswerInputProps) => {
           className="search-field"
           placeholder={
             isListening
-              ? 'Listening... describe your answer.'
-              : 'Type your answer or tap the mic to speak.'
+              ? "Listening... describe your answer."
+              : "Type your answer or tap the mic to speak."
           }
           value={text}
-          onChange={(event) => setText(event.target.value)}
+          onChange={(event) => {
+            setText(event.target.value);
+            setInputMode("text");
+          }}
           rows={3}
           disabled={disabled && !isListening}
         />
         <button
           type="button"
-          className={`mic-button ${isListening ? 'active' : ''}`}
+          className={`mic-button ${isListening ? "active" : ""}`}
           onClick={handleMic}
           disabled={disabled || !isSupported}
         >
-          {isListening ? '●' : '🎙'}
+          {isListening ? "●" : "🎙"}
         </button>
       </div>
       {!isSupported && (
-        <p className="hint">Speech input is unavailable on this browser. Please type.</p>
+        <p className="hint">
+          Speech input is unavailable on this browser. Please type.
+        </p>
       )}
       {error && <p className="hint">{error}</p>}
       <button className="primary" onClick={handleSubmit} disabled={disabled}>
         Send answer
       </button>
     </div>
-  )
-}
-
-
+  );
+};
