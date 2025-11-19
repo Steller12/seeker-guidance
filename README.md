@@ -34,9 +34,11 @@ ai interviewer/
    npm install
    ```
 2. Start dev server
+
    ```bash
    npm run dev
    ```
+
    Vite serves the SPA at `http://localhost:5173`.
 
 3. Build for production
@@ -65,12 +67,14 @@ ai interviewer/
    ```
    PORT=5000
    MONGODB_URI=mongodb://127.0.0.1:27017/seeker_portal
-   OPENAI_API_KEY=sk-xxx  # optional placeholder
+   OPENAI_API_KEY=sk-REPLACE_ME  # optional placeholder
    ```
 3. Run in dev mode
+
    ```bash
    npm run dev
    ```
+
    - Express boots at `http://localhost:5000`
    - `GET /api/status` returns a basic health payload
 
@@ -108,5 +112,3 @@ ai interviewer/
 4. Mention how the backend can swap in real AI/ML logic without touching the UX.
 
 Happy hacking! 🎤🧭
-
-

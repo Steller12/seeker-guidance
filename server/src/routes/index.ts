@@ -1,11 +1,11 @@
-import { Router } from 'express'
+import { Router } from "express";
 
-import statusRoutes from './status.routes'
+import statusRoutes from "./status.routes";
+import suggestionsRoutes from "./suggestions.routes";
 
-const router = Router()
+const router = Router();
 
-router.use('/status', statusRoutes)
+router.use("/status", statusRoutes);
+router.use("/suggestions", suggestionsRoutes);
 
-export default router
-
-
+export default router;
