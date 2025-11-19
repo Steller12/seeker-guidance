@@ -1,0 +1,148 @@
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react'
+
+import { onboardingQuestions } from '../data/questions'
+import {
+  buildRoadmap,
+  generateRoleMatches,
+  recommendJobs,
+} from '../lib/recommender'
+import type {
+  Answer,
+  AnswerMode,
+  JobRecommendation,
+  Question,
+  RoadmapStep,
+  RoleMatch,
+} from '../types/profile'
+
+type FlowStatus = 'collecting' | 'processing' | 'ready'
+
+interface ProfileFlowContextValue {
+  questions: Question[]
+  currentQuestion: Question | null
+  currentIndex: number
+  answers: Answer[]
+  status: FlowStatus
+  roleMatches: RoleMatch[]
+  roadmap: RoadmapStep[]
+  jobs: JobRecommendation[]
+  submitAnswer: (response: string, mode: AnswerMode) => void
+  reset: () => void
+}
+
+const ProfileFlowContext = createContext<ProfileFlowContextValue | undefined>(
+  undefined,
+)
+
+export const ProfileFlowProvider = ({ children }: { children: ReactNode }) => {
+  const [answers, setAnswers] = useState<Answer[]>([])
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const [status, setStatus] = useState<FlowStatus>('collecting')
+  const [roleMatches, setRoleMatches] = useState<RoleMatch[]>([])
+  const [roadmap, setRoadmap] = useState<RoadmapStep[]>([])
+  const [jobs, setJobs] = useState<JobRecommendation[]>([])
+
+  const questions = onboardingQuestions
+  const currentQuestion = currentIndex < questions.length ? questions[currentIndex] : null
+
+  const processResults = useCallback(
+    (finalAnswers: Answer[]) => {
+      const matches = generateRoleMatches(finalAnswers)
+      setRoleMatches(matches)
+      const bestRole = matches.at(0)
+      if (bestRole) {
+        setRoadmap(buildRoadmap(bestRole.id))
+        setJobs(recommendJobs(bestRole.id))
+      } else {
+        setRoadmap([])
+        setJobs([])
+      }
+      setStatus('ready')
+    },
+    [],
+  )
+
+  const submitAnswer = useCallback(
+    (response: string, mode: AnswerMode) => {
+      if (!response.trim()) return
+      const question = questions[currentIndex]
+      if (!question || status !== 'collecting') return
+
+      const entry: Answer = {
+        questionId: question.id,
+        response: response.trim(),
+        mode,
+        timestamp: Date.now(),
+      }
+      const updated = [...answers, entry]
+      setAnswers(updated)
+
+      if (currentIndex + 1 < questions.length) {
+        setCurrentIndex((prev) => prev + 1)
+      } else {
+        setStatus('processing')
+        setTimeout(() => processResults(updated), 800)
+      }
+    },
+    [answers, currentIndex, processResults, questions, status],
+  )
+
+  const reset = useCallback(() => {
+    setAnswers([])
+    setCurrentIndex(0)
+    setRoleMatches([])
+    setRoadmap([])
+    setJobs([])
+    setStatus('collecting')
+  }, [])
+
+  const value = useMemo<ProfileFlowContextValue>(
+    () => ({
+      questions,
+      currentQuestion,
+      currentIndex,
+      answers,
+      status,
+      roleMatches,
+      roadmap,
+      jobs,
+      submitAnswer,
+      reset,
+    }),
+    [
+      answers,
+      currentIndex,
+      currentQuestion,
+      jobs,
+      questions,
+      roadmap,
+      roleMatches,
+      status,
+      submitAnswer,
+      reset,
+    ],
+  )
+
+  return (
+    <ProfileFlowContext.Provider value={value}>
+      {children}
+    </ProfileFlowContext.Provider>
+  )
+}
+
+export const useProfileFlow = () => {
+  const context = useContext(ProfileFlowContext)
+  if (!context) {
+    throw new Error('useProfileFlow must be used within ProfileFlowProvider')
+  }
+  return context
+}
+
+
